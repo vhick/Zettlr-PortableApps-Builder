@@ -130,7 +130,7 @@ jobs:
           engine: custom-nsis
           running-exe: 'App\Zettlr\Zettlr.exe'
           timeout-seconds: '1200'
-          package-revision: b1r2
+          package-revision: b1r3
       - name: Locate or install 7-Zip for independent NSIS payload inspection
         if: steps.identity.outputs.skip != 'true'
         shell: pwsh
@@ -155,7 +155,7 @@ jobs:
         with:
           files: 'dist/*.zip;dist/installer/*.paf.exe'
           tag: ${{ steps.identity.outputs.release_tag }}
-          release-title: 'Zettlr ${{ steps.release.outputs.upstream_version }} PortableApps b1r2'
+          release-title: 'Zettlr ${{ steps.release.outputs.upstream_version }} PortableApps b1r3'
           tag-prefix: portable-
           keep-releases: '3'
           prune: 'false'
@@ -166,7 +166,7 @@ jobs:
         with:
           files: 'dist/*.zip;dist/installer/*.paf.exe'
           tag: ${{ steps.identity.outputs.release_tag }}
-          release-title: 'Zettlr ${{ steps.release.outputs.upstream_version }} PortableApps b1r2'
+          release-title: 'Zettlr ${{ steps.release.outputs.upstream_version }} PortableApps b1r3'
           tag-prefix: portable-
           keep-releases: '3'
           prune: 'false'

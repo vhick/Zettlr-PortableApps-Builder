@@ -60,6 +60,8 @@ Zettlr's **name, logos and corporate identity are subject to separate restrictio
 
 Changes to the release discovery, source patch or shared action baselines must be reviewed against the actual upstream code and tagged action interfaces. Pull requests should include verification evidence, not claims of completed GUI tests without a Windows session.
 
-## Launcher build diagnostics (b1r2)
+## Launcher build diagnostics (b1r3)
 
-The Windows launcher uses `scripts/build_launcher.ps1` to discover installed Visual Studio C++ tools. It checks all VS installations with `vswhere.exe`, then established GitHub runner installation folders. It verifies both `VsDevCmd.bat` and an actual x64 `cl.exe` before compiling the genuine PE launcher, and produces useful candidate diagnostics if tools are absent. This corrects the false `VS C++ toolchain missing` failure seen in the b1r1 run after the upstream source package succeeded. Windows runner verification of this new path remains pending.
+The Windows launcher uses `scripts/build_launcher.ps1` to discover installed Visual Studio C++ tools with `vswhere.exe` and standard installation locations. After validating the x64 compiler, it initializes **Microsoft Developer PowerShell** using `Launch-VsDevShell.ps1` and separately invokes the Windows resource compiler and C++ compiler using .NET's structured argument passing. No nested `cmd.exe` quoting or unverified temporary batch command is used. This corrects a command-quoting failure in b1r2 that occurred *after* Visual Studio Enterprise 2022 was found, while retaining the working source build and source-based profile isolation.
+
+The b1r2 run proved Zettlr's upstream Windows source compilation and Visual Studio discovery, but the new b1r3 launcher compilation and real PortableApps packages still require GitHub-hosted Windows validation. See `docs/VALIDATION.md` for precise evidence stages.

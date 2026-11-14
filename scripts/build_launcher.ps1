@@ -1,7 +1,7 @@
-# Zettlr PortableApps C++ launcher compile.
-# Detect the real installed MSVC toolchain instead of trusting a single vswhere
-# result/exit-code combination; fail closed if x64 compiler files are absent.
-# No machine-wide SDK installation or registry changes are performed.
+# Zettlr PortableApps community x64 launcher build (b1r3).
+# Uses Microsoft's documented Developer PowerShell initialization and .NET's
+# structured ArgumentList. Never relay quoted Visual Studio paths to cmd.exe.
+# Avoids shell-dependent quoting bugs for paths with spaces / Unicode names.
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 $ProgressPreference = 'SilentlyContinue'
@@ -20,14 +20,11 @@ function Add-VsCandidate([string] $directory) {
     }
 }
 
-# Query all matching installations: -latest combined with pipeline -First 1
-# can hide a good alternative or produce unreliable native-command exit status.
 if (Test-Path -LiteralPath $vswhere -PathType Leaf) {
     $results = @(& $vswhere -all -products '*' -requires $component -property installationPath)
-    $vsStatus = $LASTEXITCODE  # Read immediately after invoking this native command.
+    $vsStatus = $LASTEXITCODE
     Write-Host "vswhere required-component exit code: $vsStatus"
     foreach ($location in $results) { Add-VsCandidate ([string] $location) }
-    # Additional readable diagnostics/fallback if the component query was empty.
     if ($locations.Count -eq 0) {
         $allResults = @(& $vswhere -all -products '*' -property installationPath)
         $allStatus = $LASTEXITCODE
@@ -35,10 +32,10 @@ if (Test-Path -LiteralPath $vswhere -PathType Leaf) {
         foreach ($location in $allResults) { Add-VsCandidate ([string] $location) }
     }
 } else {
-    Write-Warning "vswhere.exe absent at $vswhere; checking conventional GitHub runner installation paths."
+    Write-Warning "vswhere.exe absent at $vswhere; checking known Visual Studio locations."
 }
 
-# Pin no VS release year: GitHub-hosted runners may change installation years.
+# Do not tie the builder to a single VS release year or Enterprise edition.
 foreach ($year in @('2026','2022','2019')) {
     foreach ($edition in @('Enterprise','Professional','Community','BuildTools')) {
         Add-VsCandidate (Join-Path $env:ProgramFiles "Microsoft Visual Studio\$year\$edition")
@@ -47,7 +44,8 @@ foreach ($year in @('2026','2022','2019')) {
 
 $selected = $null
 foreach ($candidate in $locations) {
-    $dev = Join-Path $candidate 'Common7\Tools\VsDevCmd.bat'
+    $devCmd = Join-Path $candidate 'Common7\Tools\VsDevCmd.bat'
+    $devShell = Join-Path $candidate 'Common7\Tools\Launch-VsDevShell.ps1'
     $msvc = Join-Path $candidate 'VC\Tools\MSVC'
     $compilers = @()
     if (Test-Path -LiteralPath $msvc -PathType Container) {
@@ -55,41 +53,75 @@ foreach ($candidate in $locations) {
             Join-Path $_.FullName 'bin\Hostx64\x64\cl.exe'
         } | Where-Object { Test-Path -LiteralPath $_ -PathType Leaf })
     }
-    Write-Host "MSVC candidate: $candidate | developer shell: $(Test-Path -LiteralPath $dev -PathType Leaf) | x64 compilers: $($compilers.Count)"
-    if ((Test-Path -LiteralPath $dev -PathType Leaf) -and $compilers.Count -gt 0) {
-        $selected = @{ Dev = $dev; Root = $candidate }
+    Write-Host "MSVC candidate: $candidate | developer shell: $(Test-Path -LiteralPath $devShell -PathType Leaf) | x64 compilers: $($compilers.Count)"
+    if ((Test-Path -LiteralPath $devCmd -PathType Leaf) -and
+        (Test-Path -LiteralPath $devShell -PathType Leaf) -and $compilers.Count -gt 0) {
+        $selected = @{ Shell = $devShell; Root = $candidate }
         break
     }
 }
 if ($null -eq $selected) {
-    throw 'No installed MSVC x64 compiler and VsDevCmd.bat found. Review detected installations and GitHub runner image; do not download unverified toolchains.'
+    throw 'No complete MSVC x64 and Developer PowerShell installation found. Confirm VsDevCmd.bat, Launch-VsDevShell.ps1 and Hostx64\x64\cl.exe on runner.'
+}
+
+# Launch-VsDevShell.ps1 is the Microsoft documented build-automation interface.
+# This modifies PATH/LIB/INCLUDE only in this short-lived CI PowerShell process.
+Write-Host "Initializing Developer PowerShell: $($selected.Shell)"
+& ($selected.Shell) -Arch amd64 -HostArch amd64 -SkipAutomaticLocation
+if ([string]::IsNullOrWhiteSpace($env:VSCMD_VER)) {
+    throw 'Visual Studio Developer PowerShell returned without VSCMD_VER; compiler environment was not initialized.'
+}
+$cl = (Get-Command -Name cl.exe -CommandType Application -ErrorAction Stop | Select-Object -First 1).Source
+$rc = (Get-Command -Name rc.exe -CommandType Application -ErrorAction Stop | Select-Object -First 1).Source
+if (-not (Test-Path -LiteralPath $cl -PathType Leaf) -or -not (Test-Path -LiteralPath $rc -PathType Leaf)) {
+    throw 'Developer PowerShell did not expose working compiler and resource compiler paths.'
+}
+if (-not $cl.StartsWith($selected.Root + '\', [StringComparison]::OrdinalIgnoreCase)) {
+    throw "Compiler resolved outside the selected Visual Studio root: $cl"
+}
+Write-Host "Initialized VS $env:VSCMD_VER | cl.exe: $cl | rc.exe: $rc"
+
+# Structured ArgumentList preserves each path as ONE Windows argument, even if
+# the CI checkout directory contains spaces or Unicode. No cmd.exe /c or
+# nested batch-script command strings are needed.
+function Invoke-BuildTool([string] $file, [string[]] $arguments) {
+    $startInfo = [System.Diagnostics.ProcessStartInfo]::new()
+    $startInfo.FileName = $file
+    $startInfo.WorkingDirectory = $root
+    $startInfo.UseShellExecute = $false
+    foreach ($arg in $arguments) { [void] $startInfo.ArgumentList.Add($arg) }
+    $process = [System.Diagnostics.Process]::new()
+    $process.StartInfo = $startInfo
+    try {
+        if (-not $process.Start()) { throw "Process could not start: $file" }
+        $process.WaitForExit()
+        $status = $process.ExitCode
+    } finally {
+        $process.Dispose()
+    }
+    if ($status -ne 0) { throw "Build tool $file returned exit code $status" }
 }
 
 $dest = Join-Path $root 'bin'
 New-Item -ItemType Directory -Force -Path $dest | Out-Null
 Copy-Item -LiteralPath (Join-Path $root 'assets\portable.ico') -Destination (Join-Path $root 'launcher\portable.ico') -Force
-$batch = Join-Path $env:RUNNER_TEMP 'compile-zettlr-launcher.cmd'
-$lines = @(
-    '@echo off',
-    'chcp 65001 >nul',
-    'call "' + $selected.Dev + '" -no_logo -arch=amd64 -host_arch=amd64',
-    'if errorlevel 1 exit /b 1',
-    'cd /d "' + $root + '"',
-    'rc.exe /nologo /i "' + $root + '\launcher" /fo "' + $root + '\bin\portable-launcher.res" "' + $root + '\launcher\portable-launcher.rc"',
-    'if errorlevel 1 exit /b 1',
-    'cl.exe /nologo /std:c++17 /EHsc /O2 /W4 /utf-8 /DUNICODE /D_UNICODE /Fe:"' + $root + '\bin\ZettlrPortable.exe" "' + $root + '\launcher\ZettlrPortable.cpp" "' + $root + '\bin\portable-launcher.res" /link /SUBSYSTEM:WINDOWS /MACHINE:X64 Shell32.lib User32.lib',
-    'exit /b %errorlevel%'
-)
-# Explicit UTF-8 is used for the cmd script (after chcp 65001); GitHub-hosted
-# RUNNER_TEMP is local to the ephemeral runner and contains no user data.
-[System.IO.File]::WriteAllText($batch, ($lines -join "`r`n") + "`r`n", [System.Text.UTF8Encoding]::new($false))
-Write-Host "Compiling ZettlrPortable.exe with MSVC from $($selected.Root)"
-& cmd.exe /d /c "`"$batch`""
-$buildStatus = $LASTEXITCODE
-if ($buildStatus -ne 0) { throw "Launcher MSVC compilation failed with exit code $buildStatus" }
+$resource = Join-Path $dest 'portable-launcher.res'
+$rcSource = Join-Path $root 'launcher\portable-launcher.rc'
+$cppSource = Join-Path $root 'launcher\ZettlrPortable.cpp'
 $exe = Join-Path $dest 'ZettlrPortable.exe'
-if (-not (Test-Path -LiteralPath $exe -PathType Leaf)) { throw 'MSVC returned success but launcher executable is missing' }
+
+Write-Host 'Compiling launcher resource with rc.exe'
+Invoke-BuildTool $rc @('/nologo', '/i', (Join-Path $root 'launcher'), '/fo', $resource, $rcSource)
+if (-not (Test-Path -LiteralPath $resource -PathType Leaf)) { throw 'Resource compilation produced no .res output' }
+Write-Host 'Compiling ZettlrPortable.exe with initialized x64 MSVC'
+Invoke-BuildTool $cl @(
+    '/nologo', '/std:c++17', '/EHsc', '/O2', '/W4', '/utf-8',
+    '/DUNICODE', '/D_UNICODE',
+    ('/Fe:' + $exe), $cppSource, $resource,
+    '/link', '/SUBSYSTEM:WINDOWS', '/MACHINE:X64', 'Shell32.lib', 'User32.lib'
+)
+if (-not (Test-Path -LiteralPath $exe -PathType Leaf)) { throw 'MSVC reported success but the launcher .exe is missing' }
 & $exe --self-test
 $selfTestStatus = $LASTEXITCODE
 if ($selfTestStatus -ne 0) { throw "Compiled launcher self-test failed with exit code $selfTestStatus" }
-Write-Host 'WINDOWS-COMPILED: compiled 64-bit launcher and passed its isolated pre-staging self-test.'
+Write-Host 'WINDOWS-COMPILED: compiled the x64 launcher and passed isolated pre-staging self-test.'

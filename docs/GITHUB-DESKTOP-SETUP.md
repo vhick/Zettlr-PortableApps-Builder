@@ -7,9 +7,9 @@ These instructions are intentionally separate from the public project `README.md
 3. Extract the downloaded builder kit ZIP into the newly cloned folder. Make sure hidden `.github` and its `workflows` subfolder are present at the repository root. The root should have `README.md`, `.github/`, `scripts/`, `launcher/`, `assets/`, `tests/` and `docs/`.
 4. Open GitHub Desktop. You should see the new project files under **Changes**. Enter this exact example commit message:
 
-   **Summary:** `Add Zettlr PortableApps builder kit b1r2`
+   **Summary:** `Fix Zettlr PortableApps launcher quoting b1r3`
 
-   **Description:** `Fix Windows MSVC discovery after successful Zettlr source build using multi-install Visual Studio detection, validated x64 compiler paths and explicit diagnostics; update builder revision to b1r2 and retain all portable-data protections.`
+   **Description:** `Replace fragile cmd.exe quoting with Microsoft Developer PowerShell and structured MSVC compiler arguments; preserve Visual Studio discovery, source-build identity and portable data protections. Bump package revision to b1r3.`
 
    Click **Commit to main** (or your default branch), then click **Push origin**. This is the **commit summary** needed for these instructions.
 5. Open your new builder repository in GitHub and choose **Actions**. If GitHub asks whether to enable workflows, enable them for this repo. Select **Build and publish Zettlr PortableApps** on the left and click **Run workflow**.

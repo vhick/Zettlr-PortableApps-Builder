@@ -43,16 +43,33 @@ class BuildTests(unittest.TestCase):
         self.assertIn('VsDevCmd.bat',ps1)
         self.assertIn('bin\\Hostx64\\x64\\cl.exe',ps1)
         self.assertIn('vswhere required-component exit code:',ps1)
-        self.assertIn('Compiling ZettlrPortable.exe with MSVC',ps1)
+        self.assertIn('Compiling ZettlrPortable.exe with initialized x64 MSVC',ps1)
         self.assertIn('--self-test',ps1)
 
-    def test_revision_consistency_b1r2(self):
+    def test_msvc_quoting_b1r3_regression(self):
+        """Reject the b1r2 nested cmd.exe invocation that split Program Files."""
+        root=Path(__file__).resolve().parents[1]
+        ps1=(root/'scripts/build_launcher.ps1').read_text(encoding='utf-8')
+        self.assertIn('Launch-VsDevShell.ps1',ps1)
+        self.assertIn('& ($selected.Shell) -Arch amd64 -HostArch amd64 -SkipAutomaticLocation',ps1)
+        self.assertIn('$env:VSCMD_VER',ps1)
+        self.assertIn('[System.Diagnostics.ProcessStartInfo]::new()',ps1)
+        self.assertIn('$startInfo.ArgumentList.Add($arg)',ps1)
+        self.assertIn('UseShellExecute = $false',ps1)
+        self.assertIn("('/Fe:' + $exe)",ps1)
+        self.assertNotIn('cmd.exe /d /c',ps1)
+        self.assertNotIn('compile-zettlr-launcher.cmd',ps1)
+        self.assertNotIn('$batch',ps1)
+        self.assertIn("Write-Host 'Compiling launcher resource with rc.exe'",ps1)
+        self.assertIn("& $exe --self-test",ps1)
+
+    def test_revision_consistency_b1r3(self):
         root=Path(__file__).resolve().parents[1]
         for relative in ('scripts/identity.py','scripts/validate_package.py','scripts/stage.py','.github/workflows/build-portable.yml'):
             source=(root/relative).read_text(encoding='utf-8')
             self.assertNotIn('b1r1',source,relative)
         self.assertIn("revision=identity['package_revision']",(root/'scripts/validate_package.py').read_text(encoding='utf-8'))
-        self.assertIn('package-revision: b1r2',(root/'.github/workflows/build-portable.yml').read_text(encoding='utf-8'))
+        self.assertIn('package-revision: b1r3',(root/'.github/workflows/build-portable.yml').read_text(encoding='utf-8'))
 
     def test_launcher_source_host_protection(self):
         source=(Path(__file__).resolve().parents[1]/'launcher'/'ZettlrPortable.cpp').read_text(encoding='utf-8')

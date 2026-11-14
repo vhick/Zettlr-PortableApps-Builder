@@ -31,4 +31,4 @@ There is no source evidence in the files inspected that Zettlr **at runtime** in
 
 ## Latest upstream confirmed by CI (14 November 2026)
 
-The user-provided b1r1 run selected official upstream v4.10.0 (`d6286e4be59f19bdd9a6299dcbe147e24f6c2112`). The source adaptation and Windows x64 `package:win-x64` build succeeded; launcher detection failed afterward. The older v4.9.0 source-inspection evidence remains correctly labeled above.
+The user-provided b1r1 run selected official upstream v4.10.0 (`d6286e4be59f19bdd9a6299dcbe147e24f6c2112`). The source adaptation and Windows x64 `package:win-x64` build succeeded in both b1r1 and b1r2 logs. b1r1 then failed Visual Studio discovery; b1r2 discovered Visual Studio Enterprise and two x64 compilers, but the nested cmd.exe command split a quoted Program Files path and failed before invocation. b1r3 replaces the nested batch invocation with Developer PowerShell and structured argument passing; its Windows result is not yet verified. The older v4.9.0 source-inspection evidence remains correctly labeled above.
