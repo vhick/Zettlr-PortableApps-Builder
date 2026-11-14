@@ -1,4 +1,4 @@
-# Zettlr PortableApps community x64 launcher build (b1r4).
+# Zettlr PortableApps community x64 launcher build (b1r5).
 # Uses Microsoft's documented Developer PowerShell initialization and .NET's
 # structured ArgumentList. Never relay quoted Visual Studio paths to cmd.exe.
 # Avoids shell-dependent quoting bugs for paths with spaces / Unicode names.

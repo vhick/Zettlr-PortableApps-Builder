@@ -36,3 +36,7 @@ The user-provided b1r1 run selected official upstream v4.10.0 (`d6286e4be59f19bd
 ### Icon source and scope (b1r4)
 
 The builder previously used a visually distinct generated portable icon, although the Zettlr application binary used upstream branding. The b1r4 builder instead consumes official `resources/icons/icon.ico` (root launcher PE resource and PortableApps appicon.ico), `resources/icons/png/16x16.png` and `resources/icons/png/32x32.png` (PortableApps menu), from the exact checked-out release. Source bytes, dimensions, SHA-256 and package provenance are checked. No icon binaries are redistributed inside the builder source kit. Zettlr branding remains restricted; independent public distribution must respect the Zettlr corporate-identity policy.
+
+### Legacy generic icons and checkout upgrades (b1r5)
+
+A ZIP overlay does not delete old files. The b1r4 CI log showed that old `assets/portable.ico` was still tracked, causing an overstrict test failure even though official icon preparation passed. This residual file is not a source for b1r5 packaging. Source-icon provenance checking, launcher resource injection, and AppInfo exact copy are enforced. Manual cleanup through GitHub Desktop is recommended but not a build prerequisite.

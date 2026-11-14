@@ -40,7 +40,7 @@ CommercialUse=true
 
 [Version]
 PackageVersion={package_version}
-DisplayVersion={'.'.join(v.groups())} Community b1r4
+DisplayVersion={'.'.join(v.groups())} Community b1r5
 
 [Control]
 Icons=1

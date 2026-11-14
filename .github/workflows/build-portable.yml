@@ -35,6 +35,16 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      - name: Warn about obsolete generic icon files from older builder kits
+        shell: pwsh
+        run: |
+          # Extracting a newer ZIP does not delete previously tracked files.
+          # Do not remove them on the CI runner: the new builder never uses them.
+          foreach ($old in @('assets/portable.ico', 'assets/portable_16.png', 'assets/portable_32.png', 'scripts/create_assets.py')) {
+            if (Test-Path -LiteralPath $old -PathType Leaf) {
+              Write-Warning "Legacy builder file $old is unused by b1r5. You may remove it in GitHub Desktop."
+            }
+          }
       - name: Run cross-platform static builder checks
         shell: pwsh
         run: python -m unittest discover -s tests -v
@@ -136,7 +146,7 @@ jobs:
           engine: custom-nsis
           running-exe: 'App\Zettlr\Zettlr.exe'
           timeout-seconds: '1200'
-          package-revision: b1r4
+          package-revision: b1r5
       - name: Locate or install 7-Zip for independent NSIS payload inspection
         if: steps.identity.outputs.skip != 'true'
         shell: pwsh
@@ -161,7 +171,7 @@ jobs:
         with:
           files: 'dist/*.zip;dist/installer/*.paf.exe'
           tag: ${{ steps.identity.outputs.release_tag }}
-          release-title: 'Zettlr ${{ steps.release.outputs.upstream_version }} PortableApps b1r4'
+          release-title: 'Zettlr ${{ steps.release.outputs.upstream_version }} PortableApps b1r5'
           tag-prefix: portable-
           keep-releases: '3'
           prune: 'false'
@@ -172,7 +182,7 @@ jobs:
         with:
           files: 'dist/*.zip;dist/installer/*.paf.exe'
           tag: ${{ steps.identity.outputs.release_tag }}
-          release-title: 'Zettlr ${{ steps.release.outputs.upstream_version }} PortableApps b1r4'
+          release-title: 'Zettlr ${{ steps.release.outputs.upstream_version }} PortableApps b1r5'
           tag-prefix: portable-
           keep-releases: '3'
           prune: 'false'

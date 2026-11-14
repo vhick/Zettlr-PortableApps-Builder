@@ -9,7 +9,7 @@
 | Separate Documents default and AUMID | Source patch code written, not executed on Windows | NOT YET VERIFIED |
 | Shared Package Builder interface | Tagged `v1.0.0` action.yml inspected | SOURCE-INSPECTED |
 | Shared Release Publisher interface | Tagged `v1.1.1` action.yml inspected | SOURCE-INSPECTED |
-| Python release logic, source adaptation fixtures, launcher safeguards and package metadata | Eleven local unit tests passing for b1r4 (including source-icon provenance and quoting regression) | STATIC-VALIDATED only |
+| Python release logic, source adaptation fixtures, launcher safeguards and package metadata | Eleven local unit tests passing for b1r5 (including source-icon provenance and quoting regression) | STATIC-VALIDATED only |
 | MSVC launcher compilation | b1r2 attempt failed before invoking compiler; b1r3/b1r4 not yet proven on Windows | NOT YET VERIFIED |
 | Actual source-built Zettlr | b1r1 and b1r2 GitHub Windows logs show successful `package:win-x64` | WINDOWS-COMPILED |
 | PortableApps launcher process operation | Requires Windows executable | NOT YET VERIFIED |
@@ -49,3 +49,9 @@ Any failure should block a claim of *runtime portability*, regardless of CI succ
 - **SOURCE-INSPECTED:** Zettlr v4.10.0 stores its Windows `icon.ico` in `resources/icons/icon.ico` and provides `16x16.png` and `32x32.png` under `resources/icons/png/`. The brand is controlled by Zettlr; a public-release permission gate remains.
 - **STATIC-VALIDATED:** The builder uses these exact files as byte-for-byte copies for `AppInfo` and passes the upstream `.ico` to the root launcher resource compiler. The new validator checks file structures, dimensions, checksums, and recorded source paths with local controlled test fixtures.
 - **NOT YET VERIFIED:** The exact Zettlr v4.10.0 icon binary was not downloaded to the local Linux environment. Icon embedding, icon rendering in Explorer/PortableApps Platform, and the generated installer's appearance must be verified with a Windows Actions run and a manual Windows session.
+
+### b1r4 user-run log and b1r5 fix (14 November 2026)
+
+- **FAILED/BLOCKED (b1r4):** User-provided GitHub Actions log `logs_117956318865.zip` confirms that exactly 10 of 11 static unit tests passed. `test_official_icons_are_used_everywhere` failed only because stale `assets/portable.ico` remained from an earlier builder version after ZIP overlay extraction. App compilation was not attempted in this run.
+- **STATIC-VALIDATED (b1r5):** Corrected the test to check that the official icon bytes are staged into AppInfo and injected into the launcher resource. Changed its obsolete-file check from a build-blocking assertion to an explicit CI warning. Source icon integrity and checksums remain mandatory. Tested with the four stale legacy files present in the builder checkout as a regression fixture.
+- **NOT YET VERIFIED:** b1r5 Windows compilation, installer generation, runtime, and publication require a new Actions run; this test fix alone does not prove those stages.
