@@ -1,0 +1,8 @@
+Zettlr PortableApps community builder kit
+Copyright (c) 2026 Contributors
+
+Launcher code, build scripts, and original generic portable icon are licensed under the GNU General Public License version 3 or (at your option) any later version. A copy of the license can be obtained from https://www.gnu.org/licenses/gpl-3.0.txt .
+
+Zettlr's upstream GPL-3.0 source is available at https://github.com/Zettlr/Zettlr . Zettlr's brand, name, and icons are restricted independently; see https://www.zettlr.com/press . This kit does not grant trademark permission.
+
+Pandoc is redistributed only as official upstream builds verified with checksums; review https://github.com/jgm/pandoc for its own copyright/license declarations. Other libraries retain their own licenses.
