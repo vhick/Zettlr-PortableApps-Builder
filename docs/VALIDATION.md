@@ -9,7 +9,7 @@
 | Separate Documents default and AUMID | Source patch code written, not executed on Windows | NOT YET VERIFIED |
 | Shared Package Builder interface | Tagged `v1.0.0` action.yml inspected | SOURCE-INSPECTED |
 | Shared Release Publisher interface | Tagged `v1.1.1` action.yml inspected | SOURCE-INSPECTED |
-| Python release logic, source adaptation fixtures, launcher safeguards and package metadata | Eleven local unit tests passing for b1r5 (including source-icon provenance and quoting regression) | STATIC-VALIDATED only |
+| Python release logic, source adaptation fixtures, launcher safeguards and package metadata | Twelve local unit tests passing for b1r6 (including source-icon provenance and quoting regression) | STATIC-VALIDATED only |
 | MSVC launcher compilation | b1r2 attempt failed before invoking compiler; b1r3/b1r4 not yet proven on Windows | NOT YET VERIFIED |
 | Actual source-built Zettlr | b1r1 and b1r2 GitHub Windows logs show successful `package:win-x64` | WINDOWS-COMPILED |
 | PortableApps launcher process operation | Requires Windows executable | NOT YET VERIFIED |
@@ -55,3 +55,9 @@ Any failure should block a claim of *runtime portability*, regardless of CI succ
 - **FAILED/BLOCKED (b1r4):** User-provided GitHub Actions log `logs_117956318865.zip` confirms that exactly 10 of 11 static unit tests passed. `test_official_icons_are_used_everywhere` failed only because stale `assets/portable.ico` remained from an earlier builder version after ZIP overlay extraction. App compilation was not attempted in this run.
 - **STATIC-VALIDATED (b1r5):** Corrected the test to check that the official icon bytes are staged into AppInfo and injected into the launcher resource. Changed its obsolete-file check from a build-blocking assertion to an explicit CI warning. Source icon integrity and checksums remain mandatory. Tested with the four stale legacy files present in the builder checkout as a regression fixture.
 - **NOT YET VERIFIED:** b1r5 Windows compilation, installer generation, runtime, and publication require a new Actions run; this test fix alone does not prove those stages.
+
+### b1r5 user-run icon failure and b1r6 repair (14 November 2026)
+
+- **FAILED/BLOCKED (b1r5):** `logs_117965823872.zip` shows source checkout, release identity, portable source patch, and all 11 b1r5 local tests passed. GitHub Windows job stopped at `scripts/prepare_icons.py`, which rejected the authentic upstream ICO for not embedding BOTH 16x16 and 32x32 frames. No source app build, launcher compilation, ZIP, installer, or release occurred in that run.
+- **STATIC-VALIDATED (b1r6):** Removed the unjustified embedded-size requirement while retaining ICO header/entry bounds checks and independently verifying each original upstream 16px/32px PNG and its SHA-256 during staging. A synthetic 256px-only ICO passes while truncated/invalid directory entries still fail. The original official ICO is preserved byte-for-byte.
+- **NOT YET VERIFIED:** b1r6 Windows execution and resource-compiler acceptance of the chosen upstream icon, package ZIP, NSIS installer, publication, and interactive behavior all require future verification.

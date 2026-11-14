@@ -24,13 +24,17 @@ The packaged application is compiled on Windows from the resolved **official Zet
 
 The builder source repository can be public by default, but public GitHub Releases containing modified Zettlr-branded binaries are separately subject to trademark and redistribution rights. The default is manual dispatch, without scheduled jobs or paid runners. A stable source is chosen numerically (not by release date or string sorting). The exact upstream commit, SHA-256 of its `yarn.lock`, builder commit, and package revision determine the release identity. An identical release tag is skipped.
 
-## Official icon preservation (b1r5)
+## Official icon preservation (b1r6)
 
 The package's root launcher, PortableApps menu ICO, 16×16 and 32×32 menu PNG icons use the **unmodified official Zettlr icon assets** from the same verified upstream source tag as the application. The `scripts/prepare_icons.py` step checks the ICO structure, PNG dimensions and exact SHA-256 copies. It records per-file provenance in `Other/Source/ICON-PROVENANCE.json`. There are no bundled icon replacements or online icon generators. The installer uses the staged `App/AppInfo/appicon.ico`; its actual Windows shell appearance must be tested after the shared installer runs.
 
-**Builder upgrade behavior (b1r5):** Overwriting an earlier kit with a ZIP can leave legacy generic icons committed in an existing GitHub repository. These files are ignored; the build uses only authenticated upstream source icons, and verification checks the real copy and packaging operations. A diagnostic warns you to remove obsolete tracked assets later, but they do not falsely fail the build. See `docs/GITHUB-DESKTOP-SETUP.md` for exactly which files can be safely removed.
+**Builder upgrade behavior (b1r6):** Overwriting an earlier kit with a ZIP can leave legacy generic icons committed in an existing GitHub repository. These files are ignored; the build uses only authenticated upstream source icons, and verification checks the real copy and packaging operations. A diagnostic warns you to remove obsolete tracked assets later, but they do not falsely fail the build. See `docs/GITHUB-DESKTOP-SETUP.md` for exactly which files can be safely removed.
 
 The official brand is controlled by Zettlr, not by this independent builder. Its public-release permission gate remains in place; consult https://www.zettlr.com/press before distributing modified builds.
+
+### b1r6: accepted official ICO frame sizes
+
+The selected Zettlr release's Windows ICO need not embed 16px and 32px images simultaneously. `prepare_icons.py` now validates that the original ICO is well-formed without imposing unsupported minimum frame sizes; the 16px and 32px menu PNGs are still individually checked against the original upstream source and copied exactly. No branding conversion or generated replacement icon is involved. The synthetic size-regression test was added after a b1r5 Windows Actions failure.
 
 ## Portable data handling
 
@@ -68,7 +72,7 @@ Zettlr's **name, logos and corporate identity are subject to separate restrictio
 
 Changes to the release discovery, source patch or shared action baselines must be reviewed against the actual upstream code and tagged action interfaces. Pull requests should include verification evidence, not claims of completed GUI tests without a Windows session.
 
-## Launcher build diagnostics (b1r5)
+## Launcher build diagnostics (b1r6)
 
 The Windows launcher uses `scripts/build_launcher.ps1` to discover installed Visual Studio C++ tools with `vswhere.exe` and standard installation locations. After validating the x64 compiler, it initializes **Microsoft Developer PowerShell** using `Launch-VsDevShell.ps1` and separately invokes the Windows resource compiler and C++ compiler using .NET's structured argument passing. No nested `cmd.exe` quoting or unverified temporary batch command is used. This corrects a command-quoting failure in b1r2 that occurred *after* Visual Studio Enterprise 2022 was found, while retaining the working source build and source-based profile isolation.
 

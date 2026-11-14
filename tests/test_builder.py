@@ -63,13 +63,13 @@ class BuildTests(unittest.TestCase):
         self.assertIn("Write-Host 'Compiling launcher resource with rc.exe'",ps1)
         self.assertIn("& $exe --self-test",ps1)
 
-    def test_revision_consistency_b1r5(self):
+    def test_revision_consistency_b1r6(self):
         root=Path(__file__).resolve().parents[1]
         for relative in ('scripts/identity.py','scripts/validate_package.py','scripts/stage.py','.github/workflows/build-portable.yml'):
             source=(root/relative).read_text(encoding='utf-8')
             self.assertNotIn('b1r1',source,relative)
         self.assertIn("revision=identity['package_revision']",(root/'scripts/validate_package.py').read_text(encoding='utf-8'))
-        self.assertIn('package-revision: b1r5',(root/'.github/workflows/build-portable.yml').read_text(encoding='utf-8'))
+        self.assertIn('package-revision: b1r6',(root/'.github/workflows/build-portable.yml').read_text(encoding='utf-8'))
 
     def test_official_icons_are_used_everywhere(self):
         root = Path(__file__).resolve().parents[1]
@@ -130,6 +130,47 @@ class BuildTests(unittest.TestCase):
             with self.assertRaises(RuntimeError):icons.prepare(up,target)
             (d/'32x32.png').unlink()
             with self.assertRaises(RuntimeError):icons.prepare(up,target)
+
+    def test_official_ico_without_small_embedded_frames(self):
+        """Regression: Zettlr's official ICO is not required to embed 16/32px.
+
+        The PortableApps menu has independently official 16/32 PNG resources.
+        Our synthetic 256px-only ICO exercises the real Windows failure mode,
+        without needing to copy Zettlr's trademarked image into the builder.
+        """
+        import struct, zlib
+        from importlib import import_module
+        icons = import_module('prepare_icons')
+        def png(size):
+            def chunk(tag, data):
+                body = tag + data
+                return struct.pack('>I', len(data)) + body + struct.pack('>I', zlib.crc32(body) & 0xffffffff)
+            row = b'\0' + b'\x11\x22\x33\xff' * size
+            return (icons.PNG_SIGNATURE +
+                    chunk(b'IHDR', struct.pack('>IIBBBBB', size, size, 8, 6, 0, 0, 0)) +
+                    chunk(b'IDAT', zlib.compress(row * size)) + chunk(b'IEND', b''))
+        big = png(256)
+        ico = (struct.pack('<HHH',0,1,1)
+               + struct.pack('<BBBBHHII',0,0,0,0,1,32,len(big),22)
+               + big)
+        self.assertEqual(icons.ico_dimensions(ico), [(256,256)])
+        with tempfile.TemporaryDirectory() as tmp:
+            source = Path(tmp)/'upstream'/'resources'/'icons'
+            (source/'png').mkdir(parents=True)
+            (source/'icon.ico').write_bytes(ico)
+            (source/'png'/'16x16.png').write_bytes(png(16))
+            (source/'png'/'32x32.png').write_bytes(png(32))
+            dest = Path(tmp)/'out'
+            icons.prepare(Path(tmp)/'upstream', dest)
+            self.assertEqual((dest/'icon.ico').read_bytes(),ico)
+            self.assertEqual((dest/'icon_16.png').read_bytes(),png(16))
+            self.assertEqual((dest/'icon_32.png').read_bytes(),png(32))
+            self.assertEqual(json.loads((dest/'ICON-PROVENANCE.json').read_text())['files']['icon.ico']['upstream_path'], 'resources/icons/icon.ico')
+        # Keep rejecting corrupt ICOs (invalid declared frame length/offset).
+        corrupt = bytearray(ico)
+        struct.pack_into('<I', corrupt, 14, len(ico)*2)
+        with self.assertRaises(RuntimeError):
+            icons.ico_dimensions(bytes(corrupt))
 
     def test_launcher_source_host_protection(self):
         source=(Path(__file__).resolve().parents[1]/'launcher'/'ZettlrPortable.cpp').read_text(encoding='utf-8')

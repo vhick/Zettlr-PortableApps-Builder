@@ -40,3 +40,7 @@ The builder previously used a visually distinct generated portable icon, althoug
 ### Legacy generic icons and checkout upgrades (b1r5)
 
 A ZIP overlay does not delete old files. The b1r4 CI log showed that old `assets/portable.ico` was still tracked, causing an overstrict test failure even though official icon preparation passed. This residual file is not a source for b1r5 packaging. Source-icon provenance checking, launcher resource injection, and AppInfo exact copy are enforced. Manual cleanup through GitHub Desktop is recommended but not a build prerequisite.
+
+### b1r6 icon-structure correction (14 November 2026)
+
+The user-provided b1r5 log confirmed that Zettlr's official `resources/icons/icon.ico` failed a builder-imposed check for both embedded 16px and 32px frames. The PortableApps menu already has separately sourced upstream PNGs at those exact dimensions. b1r6 validates the ICO container and frame byte ranges without requiring specific sizes, retains the official ICO unchanged, and validates the two separate PNGs. The actual dimensions of the upstream ICO frames were not printed in the failed b1r5 log; b1r6 now prints the observed size list for diagnosis.

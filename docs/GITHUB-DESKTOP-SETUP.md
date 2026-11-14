@@ -7,9 +7,9 @@ These instructions are intentionally separate from the public project `README.md
 3. Extract the downloaded builder kit ZIP into the newly cloned folder. Make sure hidden `.github` and its `workflows` subfolder are present at the repository root. The root should have `README.md`, `.github/`, `scripts/`, `launcher/`, `tests/` and `docs/`. Official logo files are sourced during the Windows build and are not included in the kit.
 4. Open GitHub Desktop. You should see the new project files under **Changes**. Enter this exact example commit message:
 
-   **Summary:** `Fix stale Zettlr builder icon check b1r5`
+   **Summary:** `Fix Zettlr official ICO validation b1r6`
 
-   **Description:** `Fix CI failure caused by stale unused generic icon files, retain official Zettlr icon verification and MSVC fixes, and update package revision to b1r5.`
+   **Description:** `Allow valid upstream ICO files without embedded 16px and 32px frames, retain exact official icon bytes and separately verified menu PNGs, add regression test, and update package revision to b1r6.`
 
    Click **Commit to main** (or your default branch), then click **Push origin**. This is the **commit summary** needed for these instructions.
 5. Open your new builder repository in GitHub and choose **Actions**. If GitHub asks whether to enable workflows, enable them for this repo. Select **Build and publish Zettlr PortableApps** on the left and click **Run workflow**.
@@ -25,6 +25,6 @@ These instructions are intentionally separate from the public project `README.md
 
 ### Updating an existing b1r1/b1r2/b1r3/b1r4 checkout
 
-When upgrading from an earlier builder kit, replace files from the b1r5 ZIP and **remove only these old builder-owned files** if they are present: `assets/portable.ico`, `assets/portable_16.png`, `assets/portable_32.png`, and `scripts/create_assets.py`. The `assets/` folder may then be removed if empty. These are outdated generic artwork sources and are not used by b1r5. Do not delete any application `Data` folders, host icons, other projects, or installed application files. Commit the removal together with the b1r5 changes. GitHub Actions obtains the official icon files as part of the exact upstream source checkout; no manual icon downloads are needed.
+When upgrading from an earlier builder kit, replace files from the b1r6 ZIP and **remove only these old builder-owned files** if they are present: `assets/portable.ico`, `assets/portable_16.png`, `assets/portable_32.png`, and `scripts/create_assets.py`. The `assets/` folder may then be removed if empty. These are outdated generic artwork sources and are not used by b1r6. Do not delete any application `Data` folders, host icons, other projects, or installed application files. Commit the removal together with the b1r6 changes. GitHub Actions obtains the official icon files as part of the exact upstream source checkout; no manual icon downloads are needed.
 
-**b1r4 CI fix:** Deleting those four obsolete *builder-owned* files in File Explorer, then committing the deletion through GitHub Desktop, keeps the repository clean. b1r5 also allows those files to remain temporarily: it warns but never uses them for the launcher or package. Never delete an application `Data` directory.
+**b1r4 CI fix:** Deleting those four obsolete *builder-owned* files in File Explorer, then committing the deletion through GitHub Desktop, keeps the repository clean. b1r6 also allows those files to remain temporarily: it warns but never uses them for the launcher or package. Never delete an application `Data` directory.

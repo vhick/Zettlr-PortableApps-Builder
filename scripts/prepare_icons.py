@@ -41,8 +41,9 @@ def ico_dimensions(blob: bytes):
         if not length or offset < 6 + 16 * count or offset + length > len(blob):
             raise RuntimeError('Invalid/truncated official ICO frame')
         result.append((width, height))
-    if (16, 16) not in result or (32, 32) not in result:
-        raise RuntimeError('Official ICO missing 16x16 or 32x32 image')
+    # A legitimate upstream Windows ICO does not have to contain both 16x16
+    # and 32x32 frames. The official menu PNGs are validated separately.
+    # Keep the upstream ICO byte-for-byte to preserve exact brand artwork.
     return result
 
 
@@ -67,7 +68,8 @@ def prepare(upstream: Path, output: Path):
         (output / dest).write_bytes(blob)
         manifest['files'][dest] = {'upstream_path': official, 'sha256': hashlib.sha256(blob).hexdigest()}
     (output / 'ICON-PROVENANCE.json').write_text(json.dumps(manifest, indent=2) + '\n', encoding='utf-8')
-    print('OFFICIAL ICONS VALIDATED: Windows ICO + PNG 16x16 + PNG 32x32')
+    sizes = ico_dimensions(items[0][2])
+    print('OFFICIAL ICONS VALIDATED: Windows ICO frames', sizes, '+ standalone PNG 16x16 and 32x32')
     for name, data in manifest['files'].items():
         print(name, data['upstream_path'], data['sha256'])
 
