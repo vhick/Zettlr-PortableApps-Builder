@@ -33,6 +33,27 @@ class BuildTests(unittest.TestCase):
         self.assertIn('Version=3.9',stage)
         self.assertIn('AppID=ZettlrPortable-CommunityBuild',stage)
         self.assertIn("package_version='.'.join(v.groups())+'.1'",stage)
+    def test_msvc_detection_b1r2_regression(self):
+        root=Path(__file__).resolve().parents[1]
+        workflow=(root/'.github/workflows/build-portable.yml').read_text(encoding='utf-8')
+        ps1=(root/'scripts/build_launcher.ps1').read_text(encoding='utf-8')
+        self.assertIn('run: ./scripts/build_launcher.ps1',workflow)
+        self.assertNotIn('Select-Object -First 1',workflow)
+        self.assertIn('-all -products',ps1)
+        self.assertIn('VsDevCmd.bat',ps1)
+        self.assertIn('bin\\Hostx64\\x64\\cl.exe',ps1)
+        self.assertIn('vswhere required-component exit code:',ps1)
+        self.assertIn('Compiling ZettlrPortable.exe with MSVC',ps1)
+        self.assertIn('--self-test',ps1)
+
+    def test_revision_consistency_b1r2(self):
+        root=Path(__file__).resolve().parents[1]
+        for relative in ('scripts/identity.py','scripts/validate_package.py','scripts/stage.py','.github/workflows/build-portable.yml'):
+            source=(root/relative).read_text(encoding='utf-8')
+            self.assertNotIn('b1r1',source,relative)
+        self.assertIn("revision=identity['package_revision']",(root/'scripts/validate_package.py').read_text(encoding='utf-8'))
+        self.assertIn('package-revision: b1r2',(root/'.github/workflows/build-portable.yml').read_text(encoding='utf-8'))
+
     def test_launcher_source_host_protection(self):
         source=(Path(__file__).resolve().parents[1]/'launcher'/'ZettlrPortable.cpp').read_text(encoding='utf-8')
         self.assertIn('!existedDict',source)

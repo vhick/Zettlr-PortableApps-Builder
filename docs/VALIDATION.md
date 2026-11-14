@@ -34,3 +34,10 @@ The GitHub Actions workflow will report the real source SHA, lockfile digest, bu
 - Windows and dependency-created host activity using ProcMon.
 
 Any failure should block a claim of *runtime portability*, regardless of CI success.
+
+## b1r1 GitHub Windows run and b1r2 repair (14 November 2026)
+
+- **WINDOWS-COMPILED (b1r1):** GitHub Actions logs confirm Zettlr 4.10.0 source build completed with `yarn package:win-x64`, after a successful startup source patch and Pandoc preparation.
+- **FAILED/BLOCKED (b1r1):** Launcher build did not reach MSVC. The inline `vswhere -latest ... | Select-Object -First 1` query triggered `VS C++ toolchain missing` on `windows-2022`. A compiler invocation was not recorded.
+- **STATIC-VALIDATED (b1r2):** Added `scripts/build_launcher.ps1`, using an all-installation `vswhere` query, a path fallback for runner layouts, existence checks for `VsDevCmd.bat` and `Hostx64/x64/cl.exe`, immediate capture of native exit codes and a stand-alone self-test. Python fixture checks inspect this regression path.
+- **NOT YET VERIFIED (b1r2):** The revised MSVC launcher compilation and PortableApps ZIP/installer/publisher still require a fresh Windows CI run.

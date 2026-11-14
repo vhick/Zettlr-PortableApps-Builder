@@ -9,7 +9,7 @@ version=os.environ['UPSTREAM_VERSION'];tag=os.environ['UPSTREAM_TAG']
 pack=json.loads((up/'package.json').read_text(encoding='utf-8'))
 if str(pack['version'])!=version or pack['name']!='zettlr':raise RuntimeError('Release does not match version in package.json')
 lock=up/'yarn.lock'; lock_sha=hashlib.sha256(lock.read_bytes()).hexdigest()
-builder=os.environ['GITHUB_SHA'];revision='b1r1'
+builder=os.environ['GITHUB_SHA'];revision='b1r2'
 if not re.fullmatch('[0-9a-f]{40}',builder):raise RuntimeError('Invalid builder revision')
 release=f'portable-v{version}-{sha[:9]}-{revision}-{builder[:9]}'
 # Need check EXACT builder-owned tag; 404 only means absent; other errors fail.

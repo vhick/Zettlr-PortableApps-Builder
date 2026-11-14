@@ -5,7 +5,8 @@ import hashlib,zipfile,struct,os,json,sys
 root=Path.cwd();stage=root/'staging'/'ZettlrPortable';dist=root/'dist';dist.mkdir(exist_ok=True)
 identity=json.loads((root/'build-identity.json').read_text(encoding='utf-8'))
 version=identity['upstream_tag'].lstrip('v');short=identity['upstream_commit'][:9]
-name=f'ZettlrPortable_{version}_x64_b1r1_{short}.zip'
+revision=identity['package_revision']
+name=f'ZettlrPortable_{version}_x64_{revision}_{short}.zip'
 required=['ZettlrPortable.exe','App/Zettlr/Zettlr.exe','App/Zettlr/resources/app.asar','App/Zettlr/resources/pandoc.exe','App/AppInfo/appinfo.ini','App/AppInfo/appicon.ico','App/AppInfo/appicon_16.png','App/AppInfo/appicon_32.png','Other/Source/ZettlrPortable.cpp','Other/Source/UPSTREAM-LICENSE.txt']
 for namepart in required:
     if not (stage/namepart).is_file():raise RuntimeError('Missing '+namepart)

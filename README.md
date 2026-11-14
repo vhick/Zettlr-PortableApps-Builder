@@ -18,11 +18,11 @@ The packaged application is compiled on Windows from the resolved **official Zet
 
 1. Place this repository's files into a GitHub repository you control, preserving `.github/workflows/build-portable.yml`.
 2. In GitHub **Actions**, select **Build and publish Zettlr PortableApps** and choose **Run workflow**.
-3. Leave *upstream_version* blank for the latest published stable release, or specify a full stable version, e.g. `4.9.0`.
+3. Leave *upstream_version* blank for the latest published stable release, or specify a full stable version, e.g. `4.10.0`.
 4. For a **public** builder repository, first obtain the appropriate rights to redistribute the Zettlr-branded application and confirm them with the checkbox. The checkbox is a user attestation, not legal verification. In private repositories you may build without it.
 5. After the job passes, download the `.zip` and `.paf.exe` from **Releases** and verify their SHA-256 checksums from the Actions log.
 
-The default is manual dispatch, without scheduled jobs or paid runners. A stable source is chosen numerically (not by release date or string sorting). The exact upstream commit, SHA-256 of its `yarn.lock`, builder commit, and package revision determine the release identity. An identical release tag is skipped.
+The builder source repository can be public by default, but public GitHub Releases containing modified Zettlr-branded binaries are separately subject to trademark and redistribution rights. The default is manual dispatch, without scheduled jobs or paid runners. A stable source is chosen numerically (not by release date or string sorting). The exact upstream commit, SHA-256 of its `yarn.lock`, builder commit, and package revision determine the release identity. An identical release tag is skipped.
 
 ## Portable data handling
 
@@ -59,3 +59,7 @@ Zettlr's **name, logos and corporate identity are subject to separate restrictio
 ## Contributing
 
 Changes to the release discovery, source patch or shared action baselines must be reviewed against the actual upstream code and tagged action interfaces. Pull requests should include verification evidence, not claims of completed GUI tests without a Windows session.
+
+## Launcher build diagnostics (b1r2)
+
+The Windows launcher uses `scripts/build_launcher.ps1` to discover installed Visual Studio C++ tools. It checks all VS installations with `vswhere.exe`, then established GitHub runner installation folders. It verifies both `VsDevCmd.bat` and an actual x64 `cl.exe` before compiling the genuine PE launcher, and produces useful candidate diagnostics if tools are absent. This corrects the false `VS C++ toolchain missing` failure seen in the b1r1 run after the upstream source package succeeded. Windows runner verification of this new path remains pending.

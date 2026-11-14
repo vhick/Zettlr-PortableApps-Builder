@@ -40,7 +40,7 @@ CommercialUse=true
 
 [Version]
 PackageVersion={package_version}
-DisplayVersion={'.'.join(v.groups())} Community b1r1
+DisplayVersion={'.'.join(v.groups())} Community b1r2
 
 [Control]
 Icons=1
@@ -49,7 +49,7 @@ Start=ZettlrPortable.exe
 (appinfo/'appinfo.ini').write_text(ini,encoding='utf-8',newline='\r\n')
 shutil.copy2(root/'bin'/'ZettlrPortable.exe',stage/'ZettlrPortable.exe')
 for d in ('Data/Profile/PortableDocuments','Data/TraceGuard','Other/Source','Other/Help'):(stage/d).mkdir(parents=True,exist_ok=True)
-for name in ('launcher/ZettlrPortable.cpp','scripts/patch_source.py','scripts/get_pandoc.py','scripts/stage.py'):
+for name in ('launcher/ZettlrPortable.cpp','scripts/patch_source.py','scripts/get_pandoc.py','scripts/stage.py','scripts/build_launcher.ps1'):
     shutil.copy2(root/name,stage/'Other'/'Source'/Path(name).name)
 shutil.copy2(root/'build-identity.json',stage/'Other'/'Source'/'build-identity.json')
 shutil.copy2(root/'docs/PORTABILITY-AUDIT.md',stage/'Other'/'Source'/'PORTABILITY-AUDIT.md')

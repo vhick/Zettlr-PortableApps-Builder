@@ -28,3 +28,7 @@ All paths and behaviors below are separated by **source-inspected**, **upstream-
 ## Why no aggressive ShellGuard
 
 There is no source evidence in the files inspected that Zettlr **at runtime** installs file associations, writes COM registrations, or creates shortcuts. Upstream *NSIS installer* declares associations; this builder does not run that installer. Its own custom NSIS installer must still be verified in a real Windows installation. Unconditionally sweeping Start Menu, HKCU or Jump Lists would endanger other installed apps. For now ShellGuard is **document-and-test only** for notifications and Windows-managed shell caches. Do not claim zero host traces.
+
+## Latest upstream confirmed by CI (14 November 2026)
+
+The user-provided b1r1 run selected official upstream v4.10.0 (`d6286e4be59f19bdd9a6299dcbe147e24f6c2112`). The source adaptation and Windows x64 `package:win-x64` build succeeded; launcher detection failed afterward. The older v4.9.0 source-inspection evidence remains correctly labeled above.
