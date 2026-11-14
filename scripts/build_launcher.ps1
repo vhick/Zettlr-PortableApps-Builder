@@ -1,4 +1,4 @@
-# Zettlr PortableApps community x64 launcher build (b1r3).
+# Zettlr PortableApps community x64 launcher build (b1r4).
 # Uses Microsoft's documented Developer PowerShell initialization and .NET's
 # structured ArgumentList. Never relay quoted Visual Studio paths to cmd.exe.
 # Avoids shell-dependent quoting bugs for paths with spaces / Unicode names.
@@ -104,7 +104,9 @@ function Invoke-BuildTool([string] $file, [string[]] $arguments) {
 
 $dest = Join-Path $root 'bin'
 New-Item -ItemType Directory -Force -Path $dest | Out-Null
-Copy-Item -LiteralPath (Join-Path $root 'assets\portable.ico') -Destination (Join-Path $root 'launcher\portable.ico') -Force
+$sourceIcon = Join-Path $root 'assets-build\icon.ico'
+if (-not (Test-Path -LiteralPath $sourceIcon -PathType Leaf)) { throw 'Official upstream icon not prepared before MSVC launcher compilation' }
+Copy-Item -LiteralPath $sourceIcon -Destination (Join-Path $root 'launcher\portable.ico') -Force
 $resource = Join-Path $dest 'portable-launcher.res'
 $rcSource = Join-Path $root 'launcher\portable-launcher.rc'
 $cppSource = Join-Path $root 'launcher\ZettlrPortable.cpp'

@@ -84,6 +84,12 @@ jobs:
           git -C upstream diff --check
           if ($LASTEXITCODE -ne 0) { throw 'Source patch whitespace error' }
           git -C upstream diff -- source/main.ts | Out-File -FilePath source-adaptation.diff -Encoding utf8
+      - name: Verify authentic Zettlr icons from the checked-out release
+        if: steps.identity.outputs.skip != 'true'
+        shell: pwsh
+        run: |
+          python scripts/prepare_icons.py --upstream upstream --output assets-build
+          if ($LASTEXITCODE -ne 0) { throw 'Official icon validation failed' }
       - name: Prepare verified Pandoc distribution
         if: steps.identity.outputs.skip != 'true'
         shell: pwsh
@@ -130,7 +136,7 @@ jobs:
           engine: custom-nsis
           running-exe: 'App\Zettlr\Zettlr.exe'
           timeout-seconds: '1200'
-          package-revision: b1r3
+          package-revision: b1r4
       - name: Locate or install 7-Zip for independent NSIS payload inspection
         if: steps.identity.outputs.skip != 'true'
         shell: pwsh
@@ -155,7 +161,7 @@ jobs:
         with:
           files: 'dist/*.zip;dist/installer/*.paf.exe'
           tag: ${{ steps.identity.outputs.release_tag }}
-          release-title: 'Zettlr ${{ steps.release.outputs.upstream_version }} PortableApps b1r3'
+          release-title: 'Zettlr ${{ steps.release.outputs.upstream_version }} PortableApps b1r4'
           tag-prefix: portable-
           keep-releases: '3'
           prune: 'false'
@@ -166,7 +172,7 @@ jobs:
         with:
           files: 'dist/*.zip;dist/installer/*.paf.exe'
           tag: ${{ steps.identity.outputs.release_tag }}
-          release-title: 'Zettlr ${{ steps.release.outputs.upstream_version }} PortableApps b1r3'
+          release-title: 'Zettlr ${{ steps.release.outputs.upstream_version }} PortableApps b1r4'
           tag-prefix: portable-
           keep-releases: '3'
           prune: 'false'

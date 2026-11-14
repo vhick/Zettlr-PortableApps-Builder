@@ -10,6 +10,22 @@ name=f'ZettlrPortable_{version}_x64_{revision}_{short}.zip'
 required=['ZettlrPortable.exe','App/Zettlr/Zettlr.exe','App/Zettlr/resources/app.asar','App/Zettlr/resources/pandoc.exe','App/AppInfo/appinfo.ini','App/AppInfo/appicon.ico','App/AppInfo/appicon_16.png','App/AppInfo/appicon_32.png','Other/Source/ZettlrPortable.cpp','Other/Source/UPSTREAM-LICENSE.txt']
 for namepart in required:
     if not (stage/namepart).is_file():raise RuntimeError('Missing '+namepart)
+# The launcher and PortableApps menu must use the authentic icon set from
+# THIS exact source checkout, not a generated/unrelated icon.
+icon_provenance_path = stage / 'Other/Source/ICON-PROVENANCE.json'
+if not icon_provenance_path.is_file():
+    raise RuntimeError('Missing official icon provenance')
+icon_provenance = json.loads(icon_provenance_path.read_text(encoding='utf-8'))
+icon_names = {'icon.ico': 'appicon.ico', 'icon_16.png': 'appicon_16.png', 'icon_32.png': 'appicon_32.png'}
+for name, packaged_name in icon_names.items():
+    data = icon_provenance['files'][name]
+    original = root/'upstream'/data['upstream_path']
+    staged = stage/'App'/'AppInfo'/packaged_name
+    source_hash = hashlib.sha256(original.read_bytes()).hexdigest()
+    packaged_hash = hashlib.sha256(staged.read_bytes()).hexdigest()
+    if source_hash != data['sha256'] or packaged_hash != source_hash:
+        raise RuntimeError(f'Official icon mismatch: {packaged_name}')
+print('SOURCE-MATCHED ICONS PASSED: appinfo ICO and both PNGs')
 for path in ('Data/Profile/PortableDocuments','Data/TraceGuard','Other/Source'):
     if not (stage/path).is_dir():raise RuntimeError('Missing required directory '+path)
 for item in stage.rglob('*'):

@@ -63,13 +63,66 @@ class BuildTests(unittest.TestCase):
         self.assertIn("Write-Host 'Compiling launcher resource with rc.exe'",ps1)
         self.assertIn("& $exe --self-test",ps1)
 
-    def test_revision_consistency_b1r3(self):
+    def test_revision_consistency_b1r4(self):
         root=Path(__file__).resolve().parents[1]
         for relative in ('scripts/identity.py','scripts/validate_package.py','scripts/stage.py','.github/workflows/build-portable.yml'):
             source=(root/relative).read_text(encoding='utf-8')
             self.assertNotIn('b1r1',source,relative)
         self.assertIn("revision=identity['package_revision']",(root/'scripts/validate_package.py').read_text(encoding='utf-8'))
-        self.assertIn('package-revision: b1r3',(root/'.github/workflows/build-portable.yml').read_text(encoding='utf-8'))
+        self.assertIn('package-revision: b1r4',(root/'.github/workflows/build-portable.yml').read_text(encoding='utf-8'))
+
+    def test_official_icons_are_used_everywhere(self):
+        root = Path(__file__).resolve().parents[1]
+        build = (root/'scripts/build_launcher.ps1').read_text(encoding='utf-8')
+        stage = (root/'scripts/stage.py').read_text(encoding='utf-8')
+        wf = (root/'.github/workflows/build-portable.yml').read_text(encoding='utf-8')
+        validate = (root/'scripts/validate_package.py').read_text(encoding='utf-8')
+        self.assertIn('assets-build\\icon.ico', build)
+        self.assertIn("root/'assets-build'/original",stage)
+        self.assertIn("'ICON-PROVENANCE.json'",stage)
+        self.assertIn('scripts/prepare_icons.py --upstream upstream --output assets-build',wf)
+        self.assertLess(wf.index('Verify authentic Zettlr icons'), wf.index('Compile genuine C++64 PortableApps launcher'))
+        self.assertIn('SOURCE-MATCHED ICONS PASSED',validate)
+        self.assertFalse((root/'assets'/'portable.ico').exists(), 'No generic art remains in the kit')
+        self.assertFalse((root/'scripts'/'create_assets.py').exists())
+
+    def test_official_icon_source_validation_and_exact_copy(self):
+        import struct, zlib
+        from importlib import import_module
+        icons = import_module('prepare_icons')
+        def png(sz):
+            def chunk(name, data):
+                blob = name + data
+                return struct.pack('>I',len(data))+blob+struct.pack('>I',zlib.crc32(blob)&0xffffffff)
+            row = bytes([0]) + b'\x00\x80\x00\xff' * sz
+            return (icons.PNG_SIGNATURE
+                    + chunk(b'IHDR',struct.pack('>IIBBBBB',sz,sz,8,6,0,0,0))
+                    + chunk(b'IDAT',zlib.compress(row * sz))
+                    + chunk(b'IEND',b''))
+        def ico():
+            contents=[png(16),png(32)]
+            directory=struct.pack('<HHH',0,1,2)
+            offset=6+16*2
+            for size, blob in zip((16,32),contents):
+                directory += struct.pack('<BBBBHHII',size,size,0,0,1,32,len(blob),offset)
+                offset += len(blob)
+            return directory + b''.join(contents)
+        with tempfile.TemporaryDirectory() as tmp:
+            up=Path(tmp)/'upstream'; target=Path(tmp)/'assets-build'
+            d=up/'resources/icons/png';d.mkdir(parents=True)
+            (up/'resources/icons/icon.ico').write_bytes(ico())
+            (d/'16x16.png').write_bytes(png(16))
+            (d/'32x32.png').write_bytes(png(32))
+            icons.prepare(up,target)
+            self.assertEqual((target/'icon.ico').read_bytes(),(up/'resources/icons/icon.ico').read_bytes())
+            self.assertEqual((target/'icon_16.png').read_bytes(),(d/'16x16.png').read_bytes())
+            self.assertEqual((target/'icon_32.png').read_bytes(),(d/'32x32.png').read_bytes())
+            info=json.loads((target/'ICON-PROVENANCE.json').read_text(encoding='utf-8'))
+            self.assertEqual(info['files']['icon_32.png']['upstream_path'],'resources/icons/png/32x32.png')
+            (d/'32x32.png').write_bytes(png(16))
+            with self.assertRaises(RuntimeError):icons.prepare(up,target)
+            (d/'32x32.png').unlink()
+            with self.assertRaises(RuntimeError):icons.prepare(up,target)
 
     def test_launcher_source_host_protection(self):
         source=(Path(__file__).resolve().parents[1]/'launcher'/'ZettlrPortable.cpp').read_text(encoding='utf-8')

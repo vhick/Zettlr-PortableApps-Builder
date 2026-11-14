@@ -11,8 +11,8 @@ if stage.exists(): shutil.rmtree(stage)
 (stage/'App').mkdir(parents=True)
 shutil.copytree(out,stage/'App'/'Zettlr',symlinks=False)
 appinfo=stage/'App'/'AppInfo';appinfo.mkdir()
-for original,dest in [('portable.ico','appicon.ico'),('portable_16.png','appicon_16.png'),('portable_32.png','appicon_32.png')]:
-    shutil.copy2(root/'assets'/original,appinfo/dest)
+for original,dest in [('icon.ico','appicon.ico'),('icon_16.png','appicon_16.png'),('icon_32.png','appicon_32.png')]:
+    shutil.copy2(root/'assets-build'/original,appinfo/dest)
 meta=json.loads((root/'build-identity.json').read_text(encoding='utf-8'))
 version=(up/'package.json').read_text(encoding='utf-8')
 import re
@@ -40,7 +40,7 @@ CommercialUse=true
 
 [Version]
 PackageVersion={package_version}
-DisplayVersion={'.'.join(v.groups())} Community b1r3
+DisplayVersion={'.'.join(v.groups())} Community b1r4
 
 [Control]
 Icons=1
@@ -49,9 +49,10 @@ Start=ZettlrPortable.exe
 (appinfo/'appinfo.ini').write_text(ini,encoding='utf-8',newline='\r\n')
 shutil.copy2(root/'bin'/'ZettlrPortable.exe',stage/'ZettlrPortable.exe')
 for d in ('Data/Profile/PortableDocuments','Data/TraceGuard','Other/Source','Other/Help'):(stage/d).mkdir(parents=True,exist_ok=True)
-for name in ('launcher/ZettlrPortable.cpp','scripts/patch_source.py','scripts/get_pandoc.py','scripts/stage.py','scripts/build_launcher.ps1'):
+for name in ('launcher/ZettlrPortable.cpp','scripts/patch_source.py','scripts/get_pandoc.py','scripts/prepare_icons.py','scripts/stage.py','scripts/build_launcher.ps1'):
     shutil.copy2(root/name,stage/'Other'/'Source'/Path(name).name)
 shutil.copy2(root/'build-identity.json',stage/'Other'/'Source'/'build-identity.json')
+shutil.copy2(root/'assets-build'/'ICON-PROVENANCE.json',stage/'Other'/'Source'/'ICON-PROVENANCE.json')
 shutil.copy2(root/'docs/PORTABILITY-AUDIT.md',stage/'Other'/'Source'/'PORTABILITY-AUDIT.md')
 if (root/'source-adaptation.diff').is_file():shutil.copy2(root/'source-adaptation.diff',stage/'Other'/'Source'/'source-adaptation.diff')
 shutil.copy2(up/'LICENSE',stage/'Other'/'Source'/'UPSTREAM-LICENSE.txt')
